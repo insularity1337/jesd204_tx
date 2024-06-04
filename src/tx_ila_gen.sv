@@ -7,6 +7,7 @@ module tx_ila_gen (
   input        [3:0]      MS        ,
   input        [3:0]      ME        ,
   input        [3:0][7:0] DI        ,
+  input                   EN_CNT    ,
   // ILA frame #2 data
   input                   LOAD_SETUP,
   input        [3:0]      ADJCNT    ,
@@ -73,6 +74,17 @@ module tx_ila_gen (
     end else
       conf_data <= 'b0;
 
+  logic [3:0][7:0] cnt;
+
+  for (genvar i = 0; i < 4; i++)
+    always_ff @(negedge RST_n, posedge CLK)
+      if (!RST_n)
+        cnt[i] <= i;
+      else if (|multiframe_id && EN_CNT)
+        cnt[i] <= cnt[i] + 4;
+      else
+        cnt[i] <= i;
+
   logic [3:0][7:0] data;
 
   // Octet #0
@@ -85,7 +97,7 @@ module tx_ila_gen (
         4'b0010: data[0] <= {1'b0, ADJDIR, PHADJ, LID};
         4'b0100: data[0] <= M;
         4'b1000: data[0] <= {HD, 2'b00, CF};
-        default: data[0] <= 8'h00;
+        default: data[0] <= cnt[i] /*8'h00*/;
       endcase
     else
       data[0] <= DI[0];
@@ -100,7 +112,7 @@ module tx_ila_gen (
         4'b0010: data[1] <= {SCR, 2'b00, L};
         4'b0100: data[1] <= {CS, 1'b0, N};
         4'b1000: data[1] <= RES1;
-        default: data[1] <= 8'h00;
+        default: data[1] <= cnt[i] /*8'h00*/;
       endcase
     else
       data[1] <= DI[1];
@@ -115,7 +127,7 @@ module tx_ila_gen (
         4'b0010: data[2] <= F;
         4'b0100: data[2] <= {SUBCLASSV, N_};
         4'b1000: data[2] <= RES2;
-        default: data[2] <= 8'h00;
+        default: data[2] <= cnt[i]/*8'h00*/;
       endcase
     else
       data[2] <= DI[2];
@@ -130,7 +142,7 @@ module tx_ila_gen (
         4'b0010: data[3] <= {3'b000, K};
         4'b0100: data[3] <= {JESDV, S};
         4'b1000: data[3] <= CHKSUM;
-        default: data[3] <= 8'h00;
+        default: data[3] <= cnt[i]/*8'h00*/;
       endcase
     else
       data[3] <= DI[3];
