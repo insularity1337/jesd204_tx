@@ -1,3 +1,7 @@
 *.vvp
 *.vcd
 *.csv
+html/
+regblock/
+prj/
+.Xil

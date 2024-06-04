@@ -1,0 +1,261 @@
+addrmap jesd204b_reg {
+  name = "JESD204 TX";
+  desc = "JESD204 TX IP registers";
+  default regwidth = 32;
+  default sw = rw;
+  default hw = r;
+  rsvdset = 0;
+
+  signal {
+    signalwidth = 1;
+    async = true;
+    activelow = true;
+    field_reset = true;
+    cpuif_reset = true;
+  } PRESETn;
+
+  reg {
+    name = "Link configuration #0";
+    desc = "Part 1 of link configuration parameters";
+
+    field {
+      desc = "
+        Number of adjustment resolution steps to adjust DAC LMFC.[br]
+        Applies to Subclass 2 operation only.
+      ";
+    } ADJCNT [4] = 0;
+
+    field {
+      desc = "
+        Direction to adjust DAC LMFC [br]
+        0 – Advance [br]
+        1 – Delay [br]
+        Applies to Subclass 2 operation only
+      ";
+    } ADJDIR = 0;
+
+    field {
+      desc = "Bank ID – Extension to DID";
+    } BID [4] = 0;
+
+    field {
+      desc = "No. of control words per frame clock period per link";
+    } CF [5] = 0;
+
+    field {
+      desc = "No. of control bits per sample";
+    } CS [2] = 0;
+
+    field {
+      desc = "Device (= link) identification no.";
+    } DID [8] = 0;
+
+    field {
+      desc = "No. of octets per frame";
+    } F [8] = 0;
+  } LINK_CFG_0;
+
+  reg {
+    name = "Link configuration #1";
+    desc = "Part 2 of link configuration parameters";
+
+    field {
+      desc = "High Density format";
+    } HD = 0;
+
+    field {
+      desc = "
+        JESD204 version[br]
+        000 – JESD204A[br]
+        001 – JESD204B
+      ";
+    } JESDV [3] = 0;
+
+    field {
+      desc = "No. of frames per multiframe";
+    } K [5] = 0;
+
+    field {
+      desc = "No. of lanes per converter device (link)";
+    } L [5] = 0;
+
+    field {
+      desc = "No. of converters per device";
+    } M [8] = 0;
+
+    field {
+      desc = "Converter resolution";
+    } N [5] = 0;
+  } LINK_CFG_1;
+
+  reg {
+    name = "Link configuration #2";
+    desc = "Part 3 of link configuration parameters";
+
+    field {
+      desc = "Total no. of bits per sample";
+    } N_ [5] = 0;
+
+    field {
+      desc = "
+        Phase adjustment request to DAC[br]
+        Subclass 2 only.
+      ";
+    } PHADJ = 0;
+
+    field {
+      desc = "No. of samples per converter per frame cycle";
+    } S [5] = 0;
+
+    field {
+      desc = "Scrambling enabled";
+    } SCR = 0;
+
+    field {
+      desc = "
+        Device Subclass Version[br]
+        000 – Subclass 0[br]
+        001 – Subclass 1[br]
+        010 – Subclass 2
+      ";
+    } SUBCLASSV [3] = 0;
+
+    field {
+      desc = "Reserved field 1";
+    } RES1 [8] = 0;
+
+    field {
+      desc = "Reserved field 2";
+    } RES2 [8] = 0;
+  } LINK_CFG_2;
+
+  reg {
+    name = "Lane #0 ID";
+
+    field {
+      desc = "Lane #0 identification no.";
+    } LID [5] = 0;
+  } LID_0;
+
+  reg {
+    name = "Lane #1 ID";
+
+    field {
+      desc = "Lane #1 identification no.";
+    } LID [5] = 0;
+  } LID_1;
+
+  reg {
+    name = "Lane #2 ID";
+
+    field {
+      desc = "Lane #2 identification no.";
+    } LID [5] = 0;
+  } LID_2;
+
+  reg {
+    name = "Lane #3 ID";
+
+    field {
+      desc = "Lane #3 identification no.";
+    } LID [5] = 0;
+  } LID_3;
+
+  reg {
+    name = "Lane #0 Link configuration checksum";
+
+    field {
+      desc = "Checksum Σ(all link #0 configuration fields)mod 256";
+    } CHCKSUM [8] = 0;
+  } CHCKSUM_0;
+
+  reg {
+    name = "Lane #1 Link configuration checksum";
+
+    field {
+      desc = "Checksum Σ(all link #1 configuration fields)mod 256";
+    } CHCKSUM [8] = 0;
+  } CHCKSUM_1;
+
+  reg {
+    name = "Lane #2 Link configuration checksum";
+
+    field {
+      desc = "Checksum Σ(all link #2 configuration fields)mod 256";
+    } CHCKSUM [8] = 0;
+  } CHCKSUM_2;
+
+  reg {
+    name = "Lane #3 Link configuration checksum";
+
+    field {
+      desc = "Checksum Σ(all link #3 configuration fields)mod 256";
+    } CHCKSUM [8] = 0;
+  } CHCKSUM_3;
+
+  reg {
+    name = "ILA sequence settings";
+
+    field {
+      name = "NUM_ILAS";
+      desc = "Number of ILA frames minus one";
+    } NUM_ILAS [8] = 3;
+
+    field {
+      name = "ILA_DELAY";
+      desc = "Number of additional K28.5 multiframes before first ILA multiframe";
+    } ILA_DELAY [8] = 0;
+
+    field {
+      name = "EN_ILA_CNT";
+      desc = "Enable counter insertion during ILA";
+    } EN_ILA_CNT = 1;
+  } ILA_CFG;
+
+  reg {
+    name = "Enable/disable each lane separately";
+
+    field {
+      desc = "Enable lane #0";
+    } LANE_0_EN = 1;
+
+    field {
+      desc = "Enable lane #1";
+    } LANE_1_EN = 0;
+
+    field {
+      desc = "Enable lane #2";
+    } LANE_2_EN = 0;
+
+    field {
+      desc = "Enable lane #3";
+    } LANE_3_EN = 0;
+  } LANE_EN;
+
+  reg {
+    name = "Reset signal";
+
+    field {
+      desc = "Reset signal active low";
+    } RST = 0;
+  } RESET;
+
+  reg {
+    name = "PHY reset signal";
+
+    field {
+      desc = "PHY reset signal active high";
+    } RST = 1;
+  } PHY_RESET;
+
+  reg {
+    name = "PHY reset status";
+
+    field {
+      hw = w;
+      sw = r;
+
+      desc = "PHY reset done signal active high";
+    } DONE;
+  } PHY_RESET_DONE;
+};
