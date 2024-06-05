@@ -8,6 +8,7 @@ module tx_ila_gen (
   input        [3:0]      ME        ,
   input        [3:0][7:0] DI        ,
   input                   EN_CNT    ,
+  input        [7:0]      NUM_ILAS  ,
   // ILA frame #2 data
   input                   LOAD_SETUP,
   input        [3:0]      ADJCNT    ,
@@ -40,6 +41,28 @@ module tx_ila_gen (
   output logic [3:0][7:0] DO
 );
 
+  logic send_ilas;
+
+  always_ff @(negedge RST_n, posedge CLK)
+    if (!RST_n)
+      send_ilas <= 1'b0;
+    else if (|ME)
+      if (EN && !en)
+        send_ilas <= 1'b1;
+      else if (multiframe_cnt == NUM_ILAS)
+        send_ilas <= 1'b0;
+
+  logic [7:0] multiframe_cnt;
+
+  always_ff @(negedge RST_n, posedge CLK)
+    if (!RST_n)
+      multiframe_cnt <= 'b0;
+    else if (|ME && send_ilas)
+      if (multiframe_cnt < NUM_ILAS)
+        multiframe_cnt <= multiframe_cnt + 1;
+      else
+        multiframe_cnt <= 'b0;
+
   logic en;
 
   always_ff @(negedge RST_n, posedge CLK)
@@ -48,13 +71,13 @@ module tx_ila_gen (
     else if (|ME)
       en <= EN;
 
-  logic [3:0] multiframe_id;
+  // logic [3:0] multiframe_id;
 
-  always_ff @(negedge RST_n, posedge CLK)
-    if (!RST_n)
-      multiframe_id <= 4'b0000;
-    else if (|ME)
-      multiframe_id <= {multiframe_id[2:0], (EN & ~en)};
+  // always_ff @(negedge RST_n, posedge CLK)
+  //   if (!RST_n)
+  //     multiframe_id <= 4'b0000;
+  //   else if (|ME)
+  //     multiframe_id <= {multiframe_id[2:0], (EN & ~en)};
 
   logic en_se_replacement;
 
@@ -62,15 +85,15 @@ module tx_ila_gen (
     if (!RST_n)
       en_se_replacement <= 1'b0;
     else
-      en_se_replacement <= |multiframe_id;
+      en_se_replacement <= send_ilas /*|multiframe_id*/;
 
   logic [3:0] conf_data;
 
   always_ff @(negedge RST_n, posedge CLK)
     if (!RST_n)
       conf_data <= 'b0;
-    else if (EN) begin
-      conf_data <= {conf_data[2:0], (|ME & multiframe_id[0])};
+    else if (en) begin
+      conf_data <= {conf_data[2:0], (|ME & (multiframe_cnt == 0)/*& multiframe_id[0]*/)};
     end else
       conf_data <= 'b0;
 
@@ -79,11 +102,14 @@ module tx_ila_gen (
   for (genvar i = 0; i < 4; i++)
     always_ff @(negedge RST_n, posedge CLK)
       if (!RST_n)
-        cnt[i] <= i;
-      else if (|multiframe_id && EN_CNT)
-        cnt[i] <= cnt[i] + 4;
-      else
-        cnt[i] <= i;
+        cnt[i] <= 'b0;
+      else if (EN_CNT) begin
+        if (EN && !en)
+          cnt[i] <= i;
+        else
+          cnt[i] <= cnt[i] + 4;
+      end else
+        cnt[i] <= 'b0;
 
   logic [3:0][7:0] data;
 
@@ -91,13 +117,13 @@ module tx_ila_gen (
   always_ff @(negedge RST_n, posedge CLK)
     if (!RST_n)
       data[0] <= 'b0;
-    else if (|multiframe_id)
+    else if (send_ilas/*|multiframe_id*/)
       case (conf_data)
         4'b0001: data[0] <= 8'h00;
         4'b0010: data[0] <= {1'b0, ADJDIR, PHADJ, LID};
         4'b0100: data[0] <= M;
         4'b1000: data[0] <= {HD, 2'b00, CF};
-        default: data[0] <= cnt[i] /*8'h00*/;
+        default: data[0] <= cnt[0]/*8'h00*/;
       endcase
     else
       data[0] <= DI[0];
@@ -106,13 +132,13 @@ module tx_ila_gen (
   always_ff @(negedge RST_n, posedge CLK)
     if (!RST_n)
       data[1] <= 'b0;
-    else if (|multiframe_id)
+    else if (send_ilas/*|multiframe_id*/)
       case (conf_data)
         4'b0001: data[1] <= 8'b100_11100;
         4'b0010: data[1] <= {SCR, 2'b00, L};
         4'b0100: data[1] <= {CS, 1'b0, N};
         4'b1000: data[1] <= RES1;
-        default: data[1] <= cnt[i] /*8'h00*/;
+        default: data[1] <= cnt[1]/*8'h00*/;
       endcase
     else
       data[1] <= DI[1];
@@ -121,13 +147,13 @@ module tx_ila_gen (
   always_ff @(negedge RST_n, posedge CLK)
     if (!RST_n)
       data[2] <= 'b0;
-    else if (|multiframe_id)
+    else if (send_ilas/*|multiframe_id*/)
       case (conf_data)
         4'b0001: data[2] <= DID;
         4'b0010: data[2] <= F;
         4'b0100: data[2] <= {SUBCLASSV, N_};
         4'b1000: data[2] <= RES2;
-        default: data[2] <= cnt[i]/*8'h00*/;
+        default: data[2] <= cnt[2]/*8'h00*/;
       endcase
     else
       data[2] <= DI[2];
@@ -136,13 +162,13 @@ module tx_ila_gen (
   always_ff @(negedge RST_n, posedge CLK)
     if (!RST_n)
       data[3] <= 'b0;
-    else if (|multiframe_id)
+    else if (send_ilas/*|multiframe_id*/)
       case (conf_data)
         4'b0001: data[3] <= {ADJCNT, BID};
         4'b0010: data[3] <= {3'b000, K};
         4'b0100: data[3] <= {JESDV, S};
         4'b1000: data[3] <= CHKSUM;
-        default: data[3] <= cnt[i]/*8'h00*/;
+        default: data[3] <= cnt[3]/*8'h00*/;
       endcase
     else
       data[3] <= DI[3];
@@ -184,7 +210,7 @@ module tx_ila_gen (
   always_ff @(negedge RST_n, posedge CLK)
     if (!RST_n)
       RDY <= 1'b0;
-    else if (|ME && multiframe_id[3])
+    else if (|ME && (multiframe_cnt == NUM_ILAS)/*multiframe_id[3]*/)
       RDY <= 1'b1;
 
 endmodule

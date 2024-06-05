@@ -27,6 +27,7 @@ module tx (
   input  [7:0]      CHKSUM    ,
   // Optional configuration
   input             EN_ILA_CNT, // Replace zeroes with counter inside ILA multiframes
+  input  [7:0]      NUM_ILAS  ,
   // Input data interface
   output            RDY       ,
   input  [3:0][7:0] DI        ,
@@ -97,6 +98,7 @@ module tx (
     .MS        (ms           ),
     .ME        (me           ),
     .DI        (ila_di       ),
+    .NUM_ILAS  (NUM_ILAS     ),
     .EN_CNT    (EN_ILA_CNT   ),
     .LOAD_SETUP(LOAD_SETUP   ),
     .ADJCNT    (ADJCNT       ),

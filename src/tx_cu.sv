@@ -35,7 +35,7 @@ module tx_cu (
           next_state = LMFC_ALIGN;
 
       CGS:
-        if (SYNC && |LMFC_MS)
+        if (SYNC/* && |LMFC_MS*/)
           next_state = ILA;
         else
           next_state = CGS;
