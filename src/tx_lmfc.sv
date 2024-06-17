@@ -1,6 +1,7 @@
 module tx_lmfc (
   input              CLK       ,
   input              RST_n     ,
+  input        [2:0] SUBCLASSV ,
   input              EN        ,
   input              SYSREF    ,
   input              LOAD_SETUP,
@@ -93,7 +94,7 @@ module tx_lmfc (
   logic [9:0] lmfc_cnt  ;
 
   always_comb
-    if (!SYNCED && SYSREF && !sysref_d && EN)
+    if (!SYNCED && SYSREF && !sysref_d && EN && (SUBCLASSV != 3'b000))
       lmfc_reset = 1'b1;
     else
       lmfc_reset = 1'b0;

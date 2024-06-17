@@ -21,7 +21,7 @@ module tx (
   input             PHADJ     ,
   input  [4:0]      S         ,
   input             SCR       ,
-  input  [2:0]      SUBCLASSV , // 1 only
+  input  [2:0]      SUBCLASSV , // 0 & 1
   input  [7:0]      RES1      ,
   input  [7:0]      RES2      ,
   input  [7:0]      CHKSUM    ,
@@ -55,6 +55,7 @@ module tx (
   tx_cu cu (
     .CLK        (CLK        ),
     .RST_n      (RST_n      ),
+    .SUBCLASSV  (SUBCLASSV  ),
     .SYNC       (SYNC_n     ),
     .LMFC_SYNCED(lmfc_synced),
     .LMFC_MS    (ms         ),

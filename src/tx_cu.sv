@@ -1,6 +1,7 @@
 module tx_cu (
   input              CLK        ,
   input              RST_n      ,
+  input        [2:0] SUBCLASSV  ,
   input              SYNC       ,
   input              LMFC_SYNCED,
   input        [3:0] LMFC_MS    ,
@@ -26,7 +27,10 @@ module tx_cu (
   always_comb begin
     case (current_state)
       IDLE:
-        next_state = LMFC_ALIGN;
+        if (SUBCLASSV == 3'b000)
+          next_state = CGS;
+        else
+          next_state = LMFC_ALIGN;
 
       LMFC_ALIGN:
         if (LMFC_SYNCED)
