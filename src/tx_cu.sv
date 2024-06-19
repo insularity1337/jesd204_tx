@@ -1,6 +1,7 @@
 module tx_cu (
   input              CLK        ,
   input              RST_n      ,
+  input        [7:0] ILA_DELAY  ,
   input        [2:0] SUBCLASSV  ,
   input              SYNC       ,
   input              LMFC_SYNCED,
@@ -39,7 +40,7 @@ module tx_cu (
           next_state = LMFC_ALIGN;
 
       CGS:
-        if (SYNC/* && |LMFC_MS*/)
+        if (SYNC && (mf_cnt == ILA_DELAY))
           next_state = ILA;
         else
           next_state = CGS;
@@ -57,6 +58,20 @@ module tx_cu (
         next_state = IDLE;
     endcase
   end
+
+  logic [7:0] mf_cnt;
+
+  always_ff @(posedge CLK)
+    case (current_state)
+      CGS: begin
+        if (SYNC)
+          if (|LMFC_ME && (mf_cnt < ILA_DELAY))
+            mf_cnt <= mf_cnt + 1;
+      end
+
+      default:
+        mf_cnt <= 8'h00;
+    endcase
 
   always_ff @(negedge RST_n, posedge CLK)
     if (!RST_n)

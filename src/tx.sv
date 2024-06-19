@@ -28,6 +28,7 @@ module tx (
   // Optional configuration
   input             EN_ILA_CNT, // Replace zeroes with counter inside ILA multiframes
   input  [7:0]      NUM_ILAS  ,
+  input  [7:0]      ILA_DELAY ,
   // Input data interface
   output            RDY       ,
   input  [3:0][7:0] DI        ,
@@ -55,6 +56,7 @@ module tx (
   tx_cu cu (
     .CLK        (CLK        ),
     .RST_n      (RST_n      ),
+    .ILA_DELAY  (ILA_DELAY  ),
     .SUBCLASSV  (SUBCLASSV  ),
     .SYNC       (SYNC_n     ),
     .LMFC_SYNCED(lmfc_synced),
