@@ -1,57 +1,61 @@
-module jesd204_tx #(parameter BASE_ADDR = 32'h0000_A000) (
-  input                                    PCLK   ,
-  input                                    PRESETn,
-  input  [        APB_ADDR_WIDTH-1:0]      PADDR  ,
-  input  [                       2:0]      PPROT  ,
-  input                                    PNSE   ,
-  input                                    PSEL   ,
-  input                                    PENABLE,
-  input                                    PWRITE ,
-  input  [      APB_DATA_WIDTH*8-1:0]      PWDATA ,
-  input  [  APB_DATA_WIDTH_BYTES-1:0]      PSTRB  ,
-  output                                   PREADY ,
-  output [APB_DATA_WIDTH_BYTES*8-1:0]      PRDATA ,
-  output                                   PSLVERR,
-  input                                    PWAKEUP,
-  input  [    APB_USER_REQ_WIDTH-1:0]      PAUSER ,
-  input  [ APB_USER_DATA_WIDTH*8-1:0]      PWUSER ,
-  output [ APB_USER_DATA_WIDTH*8-1:0]      PRUSER ,
-  output [   APB_USER_RESP_WIDTH-1:0]      PBUSER ,
-  input                                    CLK    ,
-  input                                    RST_n  ,
-  input                                    SYNC_n ,
-  input                                    SYSREF ,
-  output                                   RDY    ,
-  input  [                       3:0][7:0] DI     ,
-  output [                       3:0][7:0] DO
+module jesd204_tx #(
+  parameter BASE_ADDR = 32'h0000_A000,
+  parameter LANES     = 1              // four lanes max
+) (
+  input                        PCLK   ,
+  input                        PRESETn,
+  input  [     31:0]           PADDR  ,
+  input  [      2:0]           PPROT  ,
+  input                        PNSE   ,
+  input                        PSEL   ,
+  input                        PENABLE,
+  input                        PWRITE ,
+  input  [     31:0]           PWDATA ,
+  input  [      3:0]           PSTRB  ,
+  output                       PREADY ,
+  output [     31:0]           PRDATA ,
+  output                       PSLVERR,
+  input                        PWAKEUP,
+  input  [      7:0]           PAUSER ,
+  input  [      7:0]           PWUSER ,
+  output [      7:0]           PRUSER ,
+  output [      7:0]           PBUSER ,
+  input                        CLK    ,
+  input                        RST_n  ,
+  input                        SYNC_n ,
+  input                        SYSREF ,
+  output                       RDY    ,
+  input  [LANES-1:0][3:0][7:0] DI     ,
+  output [LANES-1:0][3:0][7:0] DO
 );
 
-  logic       load_setup;
-  logic [3:0] adjcnt    ;
-  logic       adjdir    ;
-  logic [3:0] bid       ;
-  logic [4:0] cf        ;
-  logic [1:0] cs        ;
-  logic [7:0] did       ;
-  logic [7:0] f         ;
-  logic       hd        ;
-  logic [2:0] jesdv     ;
-  logic [4:0] k         ;
-  logic [4:0] l         ;
-  logic [4:0] lid       ;
-  logic [7:0] m         ;
-  logic [4:0] n         ;
-  logic [4:0] n_        ;
-  logic       phadj     ;
-  logic [4:0] s         ;
-  logic       scr       ;
-  logic [2:0] subclassv ;
-  logic [7:0] res1      ;
-  logic [7:0] res2      ;
-  logic [7:0] chksum    ;
-  logic       en_ila_cnt;
-  logic [7:0] num_ilas  ;
-  logic [7:0] ila_delay ;
+  logic            load_setup;
+  logic [3:0]      adjcnt    ;
+  logic            adjdir    ;
+  logic [3:0]      bid       ;
+  logic [4:0]      cf        ;
+  logic [1:0]      cs        ;
+  logic [7:0]      did       ;
+  logic [7:0]      f         ;
+  logic            hd        ;
+  logic [2:0]      jesdv     ;
+  logic [4:0]      k         ;
+  logic [4:0]      l         ;
+  logic [3:0][4:0] lid       ;
+  logic [7:0]      m         ;
+  logic [4:0]      n         ;
+  logic [4:0]      n_        ;
+  logic            phadj     ;
+  logic [4:0]      s         ;
+  logic            scr       ;
+  logic [2:0]      subclassv ;
+  logic [7:0]      res1      ;
+  logic [7:0]      res2      ;
+  logic [7:0]      chksum    ;
+  logic            en_ila_cnt;
+  logic [7:0]      num_ilas  ;
+  logic [7:0]      ila_delay ;
+  logic [3:0]      lane_en   ;
 
   apb_regmap #(
     .APB_ADDR_WIDTH      (32       ),
@@ -101,7 +105,8 @@ module jesd204_tx #(parameter BASE_ADDR = 32'h0000_A000) (
     .CHKSUM    (chksum    ),
     .EN_ILA_CNT(en_ila_cnt),
     .NUM_ILAS  (num_ilas  ),
-    .ILA_DELAY (ila_delay )
+    .ILA_DELAY (ila_delay ),
+    .LANE_EN   (lane_en   )
   );
 
   logic [1:0] load_setup_cdc;
@@ -113,7 +118,7 @@ module jesd204_tx #(parameter BASE_ADDR = 32'h0000_A000) (
     else
       load_setup_cdc <= {load_setup_cdc[0], load_setup};
 
-  tx tx_ (
+  tx #(LANES) tx_ (
     .CLK       (CLK              ),
     .RST_n     (RST_n            ),
     .LOAD_SETUP(load_setup_cdc[1]),
@@ -139,6 +144,7 @@ module jesd204_tx #(parameter BASE_ADDR = 32'h0000_A000) (
     .RES1      (res1             ),
     .RES2      (res2             ),
     .CHKSUM    (chksum           ),
+    .LANE_EN   (lane_en          ),
     .EN_ILA_CNT(en_ila_cnt       ),
     .NUM_ILAS  (num_ilas         ),
     .ILA_DELAY (ila_delay        ),

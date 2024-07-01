@@ -3,6 +3,7 @@ module apb_rw_reg #(
   parameter                            APB_DATA_WIDTH_BYTES = 4  ,
   parameter                            APB_USER_REQ_WIDTH   = 8  ,
   parameter                            APB_USER_RESP_WIDTH  = 8  ,
+  parameter                            APB_USER_DATA_WIDTH  = 1  ,
   parameter logic [APB_ADDR_WIDTH-1:0] ADDR                 = 'b0
 ) (
   // APB interface
@@ -14,7 +15,7 @@ module apb_rw_reg #(
   input                                          PSEL   ,
   input                                          PENABLE,
   input                                          PWRITE ,
-  input        [      APB_DATA_WIDTH*8-1:0]      PWDATA ,
+  input        [APB_DATA_WIDTH_BYTES*8-1:0]      PWDATA ,
   input        [  APB_DATA_WIDTH_BYTES-1:0]      PSTRB  ,
   output logic                                   PREADY ,
   output logic [APB_DATA_WIDTH_BYTES*8-1:0]      PRDATA ,
@@ -32,7 +33,7 @@ module apb_rw_reg #(
   always_ff @(negedge PRESETn, posedge PCLK)
     if (!PRESETn)
       PREADY <= 1'b0;
-    else if ((PADDR == ADDR) && PSEL && PENABLE)
+    else if ((PADDR == ADDR) && PSEL && PENABLE && !PREADY)
       PREADY <= 1'b1;
     else
       PREADY <= 1'b0;
@@ -40,7 +41,7 @@ module apb_rw_reg #(
   for (genvar i = 0; i < APB_DATA_WIDTH_BYTES; i++)
     always_ff @(posedge PCLK)
       if ((PADDR == ADDR) && PSEL && PENABLE && PWRITE && PSTRB[i] && PREADY)
-        DO[i] <= PWDATA[i];
+        DO[i] <= PWDATA[(i+1)*8-1 -: 8];
 
   always_ff @(negedge PRESETn, posedge PCLK)
     if (!PRESETn)

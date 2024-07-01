@@ -1,17 +1,18 @@
-module tx_cu (
-  input              CLK        ,
-  input              RST_n      ,
-  input        [7:0] ILA_DELAY  ,
-  input        [2:0] SUBCLASSV  ,
-  input              SYNC       ,
-  input              LMFC_SYNCED,
-  input        [3:0] LMFC_MS    ,
-  input        [3:0] LMFC_ME    ,
-  input        [3:0] ILA_ME     ,
-  input        [3:0] ILA_RDY    ,
-  output logic       LMFC_EN    ,
-  output logic       ILA_EN     ,
-  output logic       CHAR_EN
+module tx_cu #(parameter LANES = 1) (
+  input                    CLK        ,
+  input                    RST_n      ,
+  input        [LANES-1:0] LANE_EN    ,
+  input        [      7:0] ILA_DELAY  ,
+  input        [      2:0] SUBCLASSV  ,
+  input                    SYNC       ,
+  input                    LMFC_SYNCED,
+  input        [      3:0] LMFC_MS    ,
+  input        [      3:0] LMFC_ME    ,
+  input        [      3:0] ILA_ME     ,
+  input        [      3:0] ILA_RDY    ,
+  output logic             LMFC_EN    ,
+  output logic [LANES-1:0] ILA_EN     ,
+  output logic [LANES-1:0] CHAR_EN
 );
 
   typedef enum logic [4:0] {
@@ -46,7 +47,7 @@ module tx_cu (
           next_state = CGS;
 
       ILA:
-        if (ILA_RDY && |ILA_ME)
+        if (|ILA_RDY && |ILA_ME)
           next_state = DATA;
         else
           next_state = ILA;
@@ -79,10 +80,27 @@ module tx_cu (
     else
       current_state <= next_state;
 
+  logic ila_sm;
+  logic char_sm;
+
   always_comb begin
     LMFC_EN = |current_state[4:1];
-    ILA_EN  = |current_state[4:3];
-    CHAR_EN = current_state == DATA;
+
+    ila_sm = |current_state[4:3];
+    char_sm = current_state == DATA;
   end
+
+  for (genvar i = 0; i < LANES; i++)
+    always_comb begin
+      if (LANE_EN[i] && ila_sm)
+        ILA_EN[i] = 1'b1;
+      else
+        ILA_EN[i] = 1'b0;
+
+      if (LANE_EN[i] && char_sm)
+        CHAR_EN[i] = 1'b1;
+      else
+        CHAR_EN[i] = 1'b0;
+    end
 
 endmodule
