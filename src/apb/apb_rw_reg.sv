@@ -1,4 +1,4 @@
-module apb_wo_reg #(
+module apb_rw_reg #(
   parameter                            APB_ADDR_WIDTH       = 32 ,
   parameter                            APB_DATA_WIDTH_BYTES = 4  ,
   parameter                            APB_USER_REQ_WIDTH   = 8  ,
@@ -29,6 +29,14 @@ module apb_wo_reg #(
   output logic [  APB_DATA_WIDTH_BYTES-1:0][7:0] DO
 );
 
+  always_ff @(negedge PRESETn, posedge PCLK)
+    if (!PRESETn)
+      PREADY <= 1'b0;
+    else if ((PADDR == ADDR) && PSEL && PENABLE)
+      PREADY <= 1'b1;
+    else
+      PREADY <= 1'b0;
+
   for (genvar i = 0; i < APB_DATA_WIDTH_BYTES; i++)
     always_ff @(posedge PCLK)
       if ((PADDR == ADDR) && PSEL && PENABLE && PWRITE && PSTRB[i] && PREADY)
@@ -41,5 +49,13 @@ module apb_wo_reg #(
       DVO <= 1'b1;
     else
       DVO <= 1'b0;
+
+  always_ff @(negedge PRESETn, posedge PCLK)
+    if (!PRESETn)
+      PRDATA <= {APB_DATA_WIDTH_BYTES*8{1'b0}};
+    else if ((PADDR == ADDR) && PSEL && PENABLE && !PWRITE)
+      PRDATA <= DO;
+    else
+      PRDATA <= {APB_DATA_WIDTH_BYTES*8{1'b0}};
 
 endmodule
